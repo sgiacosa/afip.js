@@ -41,7 +41,8 @@ const RegisterScopeThirteen = require('./Class/RegisterScopeThirteen');
  **/
 module.exports = Afip;
 
-function Afip(options = {}){
+function Afip(options = {}) {
+	console.log("INGRESO A AFIP 2 _>>>>>>>>");
 	/**
 	 * SDK version
 	 **/
@@ -90,7 +91,7 @@ function Afip(options = {}){
 	this.CUIT;
 
 	// Create an Afip instance if it is not
-	if (!(this instanceof Afip)) {return new Afip(options)}
+	if (!(this instanceof Afip)) { return new Afip(options) }
 
 	// Create an instance of the mixpanel client
 	/** @private */
@@ -100,32 +101,34 @@ function Afip(options = {}){
 
 	this.mixpanelRegister['afip_sdk_library'] = 'javascript';
 
-	if (!options.hasOwnProperty('CUIT')) {throw new Error("CUIT field is required in options array");}
-	
+	if (!options.hasOwnProperty('CUIT')) { throw new Error("CUIT field is required in options array"); }
+
 
 	// Define default options
-	if (!options.hasOwnProperty('production')) {options['production'] = false;}
-	if (!options.hasOwnProperty('cert')) {options['cert'] = 'cert';}
-	if (!options.hasOwnProperty('key')) {options['key'] = 'key';}
-	if (!options.hasOwnProperty('res_folder')) {options['res_folder'] = __dirname+'/Afip_res/';}
-	if (!options.hasOwnProperty('ta_folder')) {options['ta_folder'] = __dirname+'/Afip_res/';}
-	if (options['production'] !== true) {options['production'] = false;}
+	if (!options.hasOwnProperty('production')) { options['production'] = false; }
+	if (!options.hasOwnProperty('cert')) { options['cert'] = 'cert'; }
+	if (!options.hasOwnProperty('key')) { options['key'] = 'key'; }
+	if (!options.hasOwnProperty('res_folder')) { options['res_folder'] = __dirname + '/Afip_res/'; }
+	if (!options.hasOwnProperty('ta_folder')) { options['ta_folder'] = __dirname + '/Afip_res/'; }
+	if (options['production'] !== true) { options['production'] = false; }
 
 	this.mixpanelRegister['distinct_id'] = options['CUIT'];
 	this.mixpanelRegister['production'] = options['production'];
 
 	try {
 		this.mixpanel.track('initialized', Object.assign({}, this.mixpanelRegister, options));
-	} catch (e) {}
+	} catch (e) { }
 
 	this.options = options;
 
-	this.CUIT 		= options['CUIT'];
+	this.CUIT = options['CUIT'];
 	this.RES_FOLDER = options['res_folder'];
-	this.TA_FOLDER 	= options['ta_folder'];
-	this.CERT 		= path.resolve(this.RES_FOLDER, options['cert']);
-	this.PRIVATEKEY = path.resolve(this.RES_FOLDER, options['key']);
-	this.WSAA_WSDL 	= path.resolve(__dirname, 'Afip_res/', 'wsaa.wsdl');
+	this.TA_FOLDER = options['ta_folder'];
+	//this.CERT 		= path.resolve(this.RES_FOLDER, options['cert']);
+	//this.PRIVATEKEY = path.resolve(this.RES_FOLDER, options['key']);
+	this.CERT = options['cert'];
+	this.PRIVATEKEY = options['key']
+	this.WSAA_WSDL = path.resolve(__dirname, 'Afip_res/', 'wsaa.wsdl');
 
 	if (options['production']) {
 		this.WSAA_URL = 'https://wsaa.afip.gov.ar/ws/services/LoginCms';
@@ -149,12 +152,12 @@ function Afip(options = {}){
 		this.AdminClient.defaults.headers.common['Authorization'] = `Bearer ${this.options['access_token']}`;
 	}
 
-	this.ElectronicBilling 			= new ElectronicBilling(this);
-	this.RegisterScopeFour 			= new RegisterScopeFour(this);
-	this.RegisterScopeFive 			= new RegisterScopeFive(this);
-	this.RegisterInscriptionProof 	= new RegisterInscriptionProof(this);
-	this.RegisterScopeTen 			= new RegisterScopeTen(this);
-	this.RegisterScopeThirteen 		= new RegisterScopeThirteen(this);
+	this.ElectronicBilling = new ElectronicBilling(this);
+	this.RegisterScopeFour = new RegisterScopeFour(this);
+	this.RegisterScopeFive = new RegisterScopeFive(this);
+	this.RegisterInscriptionProof = new RegisterInscriptionProof(this);
+	this.RegisterScopeTen = new RegisterScopeTen(this);
+	this.RegisterScopeThirteen = new RegisterScopeThirteen(this);
 }
 
 /**
@@ -163,7 +166,7 @@ function Afip(options = {}){
  * @param service Service for token authorization
  * @private
  **/
-Afip.prototype.GetServiceTA = async function(service, firstTry = true) {
+Afip.prototype.GetServiceTA = async function (service, firstTry = true) {
 	// Declare token authorization file path
 	const taFilePath = path.resolve(
 		this.TA_FOLDER,
@@ -173,7 +176,7 @@ Afip.prototype.GetServiceTA = async function(service, firstTry = true) {
 	// Check if token authorization file exists
 	const taFileAccessError = await new Promise((resolve) => {
 		fs.access(taFilePath, fs.constants.F_OK, resolve);
-	}); 
+	});
 
 	// If have access to token authorization file
 	if (!taFileAccessError) {
@@ -187,14 +190,14 @@ Afip.prototype.GetServiceTA = async function(service, firstTry = true) {
 		if (actualTime < expirationTime) {
 			// Return token authorization
 			return {
-				token : taData.credentials.token,
-				sign : taData.credentials.sign
+				token: taData.credentials.token,
+				sign: taData.credentials.sign
 			}
 		}
 	}
-	
+
 	// Throw error if this is not the first try to get token authorization
-	if (firstTry === false){
+	if (firstTry === false) {
 		throw new Error('Error getting Token Autorization');
 	}
 
@@ -215,9 +218,9 @@ Afip.prototype.GetServiceTA = async function(service, firstTry = true) {
  *
  * @param service Service for token authorization
  **/
-Afip.prototype.CreateServiceTA = async function(service) {
+Afip.prototype.CreateServiceTA = async function (service) {
 	const date = new Date();
-	
+
 	// Tokent request authorization XML
 	const tra = (`<?xml version="1.0" encoding="UTF-8" ?>
 	<loginTicketRequest version="1.0">
@@ -230,18 +233,19 @@ Afip.prototype.CreateServiceTA = async function(service) {
 	</loginTicketRequest>`).trim();
 
 	// Get cert file content
-	const certPromise = new Promise((resolve, reject) => {
-		fs.readFile(this.CERT, { encoding:'utf8' }, (err, data) => err ? reject(err) : resolve(data));
-	});
-		
-	// Get key file content
-	const keyPromise = new Promise((resolve, reject) => {
-		fs.readFile(this.PRIVATEKEY, { encoding:'utf8' }, (err, data) => err ? reject(err) : resolve(data));
-	});
+	// const certPromise = new Promise((resolve, reject) => {
+	// 	fs.readFile(this.CERT, { encoding: 'utf8' }, (err, data) => err ? reject(err) : resolve(data));
+	// });
+
+	// // Get key file content
+	// const keyPromise = new Promise((resolve, reject) => {
+	// 	fs.readFile(this.PRIVATEKEY, { encoding: 'utf8' }, (err, data) => err ? reject(err) : resolve(data));
+	// });
 
 	// Wait for cert and key content
-	const [cert, key] = await Promise.all([certPromise, keyPromise]);
-
+	//const [cert, key] = await Promise.all([certPromise, keyPromise]);
+	const cert = this.CERT;
+	const key = this.PRIVATEKEY
 	// Sign Tokent request authorization XML
 	const p7 = forge.pkcs7.createSignedData();
 	p7.content = forge.util.createBuffer(tra, "utf8");
@@ -250,12 +254,12 @@ Afip.prototype.CreateServiceTA = async function(service) {
 		authenticatedAttributes: [{
 			type: forge.pki.oids.contentType,
 			value: forge.pki.oids.data,
-		}, 
+		},
 		{
 			type: forge.pki.oids.messageDigest
-		}, 
+		},
 		{
-			type: forge.pki.oids.signingTime, 
+			type: forge.pki.oids.signingTime,
 			value: new Date()
 		}],
 		certificate: cert,
@@ -267,30 +271,30 @@ Afip.prototype.CreateServiceTA = async function(service) {
 	const signedTRA = Buffer.from(bytes, "binary").toString("base64");
 
 	// SOAP Client options
-	const soapClientOptions = { disableCache:true, endpoint: this.WSAA_URL };
+	const soapClientOptions = { disableCache: true, endpoint: this.WSAA_URL };
 
 	// Create SOAP client
 	const soapClient = await soap.createClientAsync(this.WSAA_WSDL, soapClientOptions);
 
 	// Arguments for soap client request 
 	const loginArguments = { in0: signedTRA };
-	
+
 	// Call loginCms SOAP method
-	const [ loginCmsResult ] = await soapClient.loginCmsAsync(loginArguments)
+	const [loginCmsResult] = await soapClient.loginCmsAsync(loginArguments)
 
 	// Parse loginCmsReturn to JSON 
-	const res = await xmlParser.parseStringPromise(loginCmsResult.loginCmsReturn); 
+	const res = await xmlParser.parseStringPromise(loginCmsResult.loginCmsReturn);
 
 	// Declare token authorization file path
 	const taFilePath = path.resolve(
 		this.TA_FOLDER,
 		`TA-${this.options['CUIT']}-${service}${this.options['production'] ? '-production' : ''}.json`
 	);
-	
+
 	// Save Token authorization data to json file
 	await (new Promise((resolve, reject) => {
 		fs.writeFile(taFilePath, JSON.stringify(res.loginticketresponse), (err) => {
-			if (err) {reject(err);return;}
+			if (err) { reject(err); return; }
 			resolve();
 		});
 	}));
@@ -305,7 +309,7 @@ Afip.prototype.CreateServiceTA = async function(service) {
  * @param array params Parameters for the ws
  * @private
  **/
-Afip.prototype.TrackUsage = async function(web_service, operation, params = {}) {
+Afip.prototype.TrackUsage = async function (web_service, operation, params = {}) {
 	options = {};
 
 	if (web_service === 'wsfe' && operation === 'FECAESolicitar') {
@@ -319,8 +323,8 @@ Afip.prototype.TrackUsage = async function(web_service, operation, params = {}) 
 	}
 
 	try {
-		this.mixpanel.track(web_service+'.'+operation, Object.assign({}, this.mixpanelRegister, options));
-	} catch (e) {}
+		this.mixpanel.track(web_service + '.' + operation, Object.assign({}, this.mixpanelRegister, options));
+	} catch (e) { }
 
 	if (!this.AdminClientInitialized && this.options['production'] === true) {
 		try {
@@ -357,8 +361,7 @@ Afip.prototype.TrackUsage = async function(web_service, operation, params = {}) 
  *
  * @return AfipWebService Token Authorization for AFIP Web Service 
  **/
-Afip.prototype.WebService = function (service, options)
-{
+Afip.prototype.WebService = function (service, options) {
 	options['service'] = service;
 	options['generic'] = true;
 
