@@ -4,7 +4,6 @@ const soap = require('soap');
 const axios = require('axios');
 const forge = require('node-forge');
 const xml2js = require('xml2js');
-const Mixpanel = require('mixpanel');
 
 // XML parser
 var xmlParser = new xml2js.Parser({
@@ -93,13 +92,7 @@ function Afip(options = {}) {
 	// Create an Afip instance if it is not
 	if (!(this instanceof Afip)) { return new Afip(options) }
 
-	// Create an instance of the mixpanel client
-	/** @private */
-	this.mixpanel = Mixpanel.init('e87ee11c8cc288e5c5dc213c4d957c7e');
-	/** @private */
-	this.mixpanelRegister = {};
 
-	this.mixpanelRegister['afip_sdk_library'] = 'javascript';
 
 	if (!options.hasOwnProperty('CUIT')) { throw new Error("CUIT field is required in options array"); }
 
@@ -112,12 +105,6 @@ function Afip(options = {}) {
 	if (!options.hasOwnProperty('ta_folder')) { options['ta_folder'] = __dirname + '/Afip_res/'; }
 	if (options['production'] !== true) { options['production'] = false; }
 
-	this.mixpanelRegister['distinct_id'] = options['CUIT'];
-	this.mixpanelRegister['production'] = options['production'];
-
-	try {
-		this.mixpanel.track('initialized', Object.assign({}, this.mixpanelRegister, options));
-	} catch (e) { }
 
 	this.options = options;
 
@@ -322,9 +309,6 @@ Afip.prototype.TrackUsage = async function (web_service, operation, params = {})
 		}
 	}
 
-	try {
-		this.mixpanel.track(web_service + '.' + operation, Object.assign({}, this.mixpanelRegister, options));
-	} catch (e) { }
 
 	if (!this.AdminClientInitialized && this.options['production'] === true) {
 		try {
