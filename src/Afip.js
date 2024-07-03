@@ -1,7 +1,6 @@
 const fs = require('fs');
 const path = require('path');
 const soap = require('soap');
-const axios = require('axios');
 const forge = require('node-forge');
 const xml2js = require('xml2js');
 
@@ -124,20 +123,7 @@ function Afip(options = {}) {
 		this.WSAA_URL = 'https://wsaahomo.afip.gov.ar/ws/services/LoginCms';
 	}
 
-	// Create an instance of the admin client
-	/** @private */
-	this.AdminClient = axios.create({
-		baseURL: 'https://app.afipsdk.com/api/',
-		timeout: 10000
-	});
-
-	this.AdminClient.defaults.headers.common['sdk-version-number'] = this.sdk_version_number;
-	this.AdminClient.defaults.headers.common['sdk-library'] = 'javascript';
-	this.AdminClient.defaults.headers.common['sdk-environment'] = this.options['production'] === true ? "prod" : "dev";
-
-	if (this.options['access_token']) {
-		this.AdminClient.defaults.headers.common['Authorization'] = `Bearer ${this.options['access_token']}`;
-	}
+	
 
 	this.ElectronicBilling = new ElectronicBilling(this);
 	this.RegisterScopeFour = new RegisterScopeFour(this);
@@ -310,31 +296,7 @@ Afip.prototype.TrackUsage = async function (web_service, operation, params = {})
 	}
 
 
-	if (!this.AdminClientInitialized && this.options['production'] === true) {
-		try {
-			await this.AdminClient.post('v1/sdk-events', {
-				"name": "initialized",
-				"properties": {
-					"environment": this.options['production'] === true ? "prod" : "dev",
-					"tax_id": `${this.options['CUIT']}`,
-					"afip_sdk_library": "javascript"
-				}
-			});
-
-			/** @private */
-			this.AdminClientInitialized = true;
-		} catch (error) {
-			if (!error.response) {
-				throw error;
-			}
-			else if (error.response.data && error.response.data.message) {
-				throw Object.assign(new Error(error.response.data.message), error.response.data);
-			}
-			else {
-				throw Object.assign(new Error(error.response.statusText), error.response);
-			}
-		}
-	}
+	
 }
 
 /**
